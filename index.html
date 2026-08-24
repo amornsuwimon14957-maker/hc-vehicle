@@ -8,7 +8,7 @@
     <!-- Open Graph Metadata -->
     <meta property="og:title" content="ระบบบันทึกประวัติการซ่อมรถยนต์">
     <meta property="og:description" content="ระบบบันทึกประวัติการซ่อมบำรุงรถกระบะและรถตู้ พร้อมเลือกรายการอะไหล่">
-    <meta property="og:image" content="https://images.unsplash.com/photo-1517524008697-84bbe3c3fd98?q=80&w=1200&auto=format&fit=crop">
+    <meta property="og:image" content="https://i.postimg.cc/zGDR1XdR/Designing-HC-Vehicle-Maintenance-2K-202608242125-removebg-preview.png">
     <meta property="og:type" content="website">
 
     <style>
@@ -76,13 +76,15 @@
         }
 
         .app-logo {
-            width: 110px;
-            height: 110px;
-            object-fit: cover;
+            width: 120px;
+            height: 120px;
+            object-fit: contain;
             border-radius: 50%;
-            border: 3px solid rgba(255, 255, 255, 0.8);
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.4);
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
             margin-bottom: 12px;
+            padding: 5px;
             transition: transform 0.3s ease;
         }
 
@@ -149,29 +151,22 @@
             background: #ffffff;
         }
 
-        .machine-no-group {
+        .machine-no-header {
             display: flex;
-            gap: 8px;
+            justify-content: space-between;
             align-items: center;
-        }
-
-        .machine-no-group select {
-            flex: 1;
-            min-width: 90px;
-            text-align: center;
+            margin-bottom: 5px;
         }
 
         .btn-add-no {
-            padding: 9px 14px;
+            padding: 2px 8px;
             background: #0284c7;
             color: white;
             border: none;
-            border-radius: 6px;
+            border-radius: 4px;
             font-weight: bold;
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             cursor: pointer;
-            white-space: nowrap;
-            flex-shrink: 0;
         }
 
         .btn-add-no:hover { background: #0369a1; }
@@ -181,11 +176,10 @@
             .grid-container { grid-template-columns: 1fr; }
             .form-row { grid-template-columns: 1fr; }
             .creator-badge { position: static; text-align: center; margin: 0 auto 15px auto; display: table; }
-            .app-logo { width: 90px; height: 90px; }
+            .app-logo { width: 100px; height: 100px; }
             .app-header h1 { font-size: 1.35rem; }
             .app-header p { font-size: 0.85rem; }
             .card { padding: 15px; }
-            .machine-no-group select { text-align: left; }
         }
 
         .step-box {
@@ -406,6 +400,33 @@
             color: #94a3b8;
             padding: 30px;
         }
+
+        /* Modal เพิ่มทะเบียนรถ */
+        .modal-backdrop {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 15px;
+        }
     </style>
 </head>
 <body>
@@ -419,7 +440,7 @@
         </div>
 
         <header class="app-header">
-            <img src="https://images.unsplash.com/photo-1517524008697-84bbe3c3fd98?q=80&w=300&auto=format&fit=crop" alt="Auto Repair Logo" class="app-logo">
+            <img src="https://i.postimg.cc/zGDR1XdR/Designing-HC-Vehicle-Maintenance-2K-202608242125-removebg-preview.png" alt="Vehicle Maintenance Logo" class="app-logo">
             <h1>🛠️ ระบบบันทึกประวัติการซ่อมรถยนต์</h1>
             <p>บันทึกประวัติซ่อมบำรุงและเลือกรายการอะไหล่สำหรับ รถกระบะ และ รถตู้</p>
         </header>
@@ -438,7 +459,7 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label for="machineType">🚘 ประเภทรถยนต์</label>
-                            <select id="machineType">
+                            <select id="machineType" onchange="onTypeChange()">
                                 <option value="">-- เลือกประเภทรถยนต์ --</option>
                                 <option value="pickup">🛻 รถกระบะ</option>
                                 <option value="van">🚐 รถตู้</option>
@@ -446,16 +467,13 @@
                         </div>
 
                         <div class="form-group">
-                            <label for="machineNo">🔢 ทะเบียน / รหัสรถ</label>
-                            <div class="machine-no-group">
-                                <select id="machineNo">
-                                    <option value="ผก-1001">ผก-1001</option>
-                                    <option value="ผก-1002">ผก-1002</option>
-                                    <option value="นข-2001">นข-2001</option>
-                                    <option value="นข-2002">นข-2002</option>
-                                </select>
-                                <button type="button" class="btn-add-no" onclick="addNewMachineNumber()">➕ เพิ่มทะเบียน</button>
+                            <div class="machine-no-header">
+                                <label for="machineNo" style="margin-bottom:0;">🔢 ทะเบียนรถ</label>
+                                <button type="button" class="btn-add-no" onclick="openAddModal()">➕ เพิ่มทะเบียน</button>
                             </div>
+                            <select id="machineNo" disabled>
+                                <option value="">-- กรุณาเลือกประเภทรถก่อน --</option>
+                            </select>
                         </div>
                     </div>
                     <button type="button" id="confirmMachineBtn" class="btn btn-secondary" onclick="confirmMachineSelection()">✅ ยืนยันรถยนต์ที่เลือก</button>
@@ -515,14 +533,40 @@
         </div>
     </div>
 
+    <!-- Modal เพิ่มทะเบียนรถใหม่ -->
+    <div id="addModal" class="modal-backdrop" style="display: none;">
+        <div class="modal-content">
+            <h3 style="margin-top: 0; margin-bottom: 15px;">➕ เพิ่มทะเบียนรถใหม่</h3>
+            <div class="form-group">
+                <label for="modalType">🚘 เลือกประเภทรถ</label>
+                <select id="modalType">
+                    <option value="pickup">🛻 รถกระบะ</option>
+                    <option value="van">🚐 รถตู้</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="modalPlate">🔢 ทะเบียน / รหัสรถ</label>
+                <input type="text" id="modalPlate" placeholder="เช่น กข-9999">
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-sm" onclick="closeAddModal()" style="background: #64748b; color: white;">ยกเลิก</button>
+                <button type="button" class="btn-sm" onclick="saveNewPlate()" style="background: var(--primary-color); color: white;">บันทึก</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // รูป Diagram แสดงชิ้นส่วนอะไหล่ (แยกตามประเภทรถกระบะ และ รถตู้)
+        // รายการทะเบียนรถเริ่มต้น แยกประเภท
+        const defaultPlates = {
+            "pickup": ["ผก-1001", "ผก-1002", "ผก-1003"],
+            "van": ["นข-2001", "นข-2002", "นข-2003"]
+        };
+
         const diagramImages = {
             "pickup": "https://images.unsplash.com/photo-1530046339160-ce3e530c7d2f?q=80&w=800&auto=format&fit=crop",
             "van": "https://images.unsplash.com/photo-1570125909232-eb263c188f7e?q=80&w=800&auto=format&fit=crop"
         };
 
-        // ฐานข้อมูลรายการอะไหล่แยกตามประเภทรถ
         const partsData = {
             "pickup": [
                 { id: "No.1", name: "No.1 น้ำมันเครื่องสังเคราะห์แท้ ดีเซล (6L+1L)", price: 1950 },
@@ -562,64 +606,86 @@
         };
 
         document.addEventListener("DOMContentLoaded", () => {
-            loadCustomMachineNumbers();
             updateFilterOptions();
             loadRepairHistory();
         });
 
-        function loadCustomMachineNumbers() {
-            const select = document.getElementById("machineNo");
-            let savedNumbers = [];
+        function getPlatesByType(type) {
+            let customPlates = {};
             try {
-                savedNumbers = JSON.parse(localStorage.getItem("customCarPlates")) || [];
-            } catch (e) { savedNumbers = []; }
+                customPlates = JSON.parse(localStorage.getItem("categorizedCarPlates")) || {};
+            } catch (e) { customPlates = {}; }
 
-            savedNumbers.forEach(num => {
-                if (!Array.from(select.options).some(opt => opt.value === num)) {
-                    const opt = document.createElement("option");
-                    opt.value = num;
-                    opt.text = num;
-                    select.appendChild(opt);
-                }
-            });
+            const list = [...(defaultPlates[type] || []), ...(customPlates[type] || [])];
+            return [...new Set(list)];
         }
 
-        function addNewMachineNumber() {
-            let inputNum = prompt("กรุณากรอกทะเบียนรถยนต์ใหม่ (เช่น กข-9999):");
-            if (inputNum === null) return;
+        function onTypeChange() {
+            const type = document.getElementById("machineType").value;
+            const selectNo = document.getElementById("machineNo");
 
-            inputNum = inputNum.trim();
-            if (!inputNum) {
-                alert("กรุณากรอกทะเบียนรถครับ");
+            if (!type) {
+                selectNo.innerHTML = `<option value="">-- กรุณาเลือกประเภทรถก่อน --</option>`;
+                selectNo.disabled = true;
                 return;
             }
 
-            const select = document.getElementById("machineNo");
-            const exists = Array.from(select.options).some(opt => opt.value === inputNum);
-            
-            if (exists) {
-                select.value = inputNum;
-                alert(`ทะเบียน ${inputNum} มีอยู่ในรายการแล้ว`);
+            const plates = getPlatesByType(type);
+            selectNo.innerHTML = "";
+            plates.forEach(p => {
+                const opt = document.createElement("option");
+                opt.value = p;
+                opt.text = p;
+                selectNo.appendChild(opt);
+            });
+            selectNo.disabled = false;
+        }
+
+        function openAddModal() {
+            const currentType = document.getElementById("machineType").value;
+            if (currentType) {
+                document.getElementById("modalType").value = currentType;
+            }
+            document.getElementById("modalPlate").value = "";
+            document.getElementById("addModal").style.display = "flex";
+        }
+
+        function closeAddModal() {
+            document.getElementById("addModal").style.display = "none";
+        }
+
+        function saveNewPlate() {
+            const type = document.getElementById("modalType").value;
+            const plate = document.getElementById("modalPlate").value.trim();
+
+            if (!plate) {
+                alert("กรุณากรอกเลขทะเบียนรถ");
                 return;
             }
 
-            const opt = document.createElement("option");
-            opt.value = inputNum;
-            opt.text = inputNum;
-            select.appendChild(opt);
-            select.value = inputNum;
-
-            let savedNumbers = [];
+            let customPlates = {};
             try {
-                savedNumbers = JSON.parse(localStorage.getItem("customCarPlates")) || [];
-            } catch (e) { savedNumbers = []; }
+                customPlates = JSON.parse(localStorage.getItem("categorizedCarPlates")) || {};
+            } catch (e) { customPlates = {}; }
 
-            if (!savedNumbers.includes(inputNum)) {
-                savedNumbers.push(inputNum);
-                localStorage.setItem("customCarPlates", JSON.stringify(savedNumbers));
+            if (!customPlates[type]) customPlates[type] = [];
+
+            const existing = getPlatesByType(type);
+            if (existing.includes(plate)) {
+                alert(`ทะเบียน ${plate} มีในระบบแล้ว`);
+            } else {
+                customPlates[type].push(plate);
+                localStorage.setItem("categorizedCarPlates", JSON.stringify(customPlates));
+                alert(`เพิ่มทะเบียน ${plate} ให้กับ ${type === 'pickup' ? 'รถกระบะ' : 'รถตู้'} เรียบร้อยแล้ว`);
             }
 
-            alert(`เพิ่มทะเบียนรถ ${inputNum} เรียบร้อยแล้ว!`);
+            closeAddModal();
+
+            // อัปเดต Dropdown ปัจจุบันถ้าประเภทตรงกัน
+            if (document.getElementById("machineType").value === type) {
+                onTypeChange();
+                document.getElementById("machineNo").value = plate;
+            }
         }
 
         function confirmMachineSelection() {
@@ -634,6 +700,11 @@
 
             if (!typeSelect.value) {
                 alert("กรุณาเลือกประเภทรถยนต์ก่อนครับ");
+                return;
+            }
+
+            if (!machineNo) {
+                alert("กรุณาเลือกทะเบียนรถก่อนครับ");
                 return;
             }
 
@@ -743,6 +814,7 @@
 
             document.getElementById("techName").value = "";
             document.getElementById("machineType").value = "";
+            onTypeChange();
             document.getElementById("partsContainer").innerHTML = `<div class="empty-msg">⚠️ กดยืนยันเลือกประเภทรถยนต์ในขั้นตอนที่ 1 ก่อน</div>`;
             document.getElementById("diagramContainer").style.display = "none";
             document.getElementById("selectedMachineBadge").style.display = "none";
