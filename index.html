@@ -556,7 +556,6 @@
     </div>
 
     <script>
-        // รายการทะเบียนรถเริ่มต้น แยกประเภท
         const defaultPlates = {
             "pickup": ["ผก-1001", "ผก-1002", "ผก-1003"],
             "van": ["นข-2001", "นข-2002", "นข-2003"]
@@ -610,14 +609,20 @@
             loadRepairHistory();
         });
 
+        // ดึงข้อมูลทะเบียนรถทั้ง Default และที่ผู้ใช้เพิ่มไว้
         function getPlatesByType(type) {
             let customPlates = {};
             try {
-                customPlates = JSON.parse(localStorage.getItem("categorizedCarPlates")) || {};
+                const storedData = localStorage.getItem("categorizedCarPlates");
+                if (storedData) {
+                    customPlates = JSON.parse(storedData);
+                }
             } catch (e) { customPlates = {}; }
 
-            const list = [...(defaultPlates[type] || []), ...(customPlates[type] || [])];
-            return [...new Set(list)];
+            const defaultList = defaultPlates[type] || [];
+            const userList = customPlates[type] || [];
+            
+            return Array.from(new Set([...defaultList, ...userList]));
         }
 
         function onTypeChange() {
@@ -635,7 +640,7 @@
             plates.forEach(p => {
                 const opt = document.createElement("option");
                 opt.value = p;
-                opt.text = p;
+                opt.textContent = p;
                 selectNo.appendChild(opt);
             });
             selectNo.disabled = false;
@@ -654,6 +659,7 @@
             document.getElementById("addModal").style.display = "none";
         }
 
+        // บันทึกทะเบียนรถลง LocalStorage อย่างถูกต้อง
         function saveNewPlate() {
             const type = document.getElementById("modalType").value;
             const plate = document.getElementById("modalPlate").value.trim();
@@ -665,26 +671,32 @@
 
             let customPlates = {};
             try {
-                customPlates = JSON.parse(localStorage.getItem("categorizedCarPlates")) || {};
+                const storedData = localStorage.getItem("categorizedCarPlates");
+                if (storedData) {
+                    customPlates = JSON.parse(storedData);
+                }
             } catch (e) { customPlates = {}; }
 
-            if (!customPlates[type]) customPlates[type] = [];
-
-            const existing = getPlatesByType(type);
-            if (existing.includes(plate)) {
-                alert(`ทะเบียน ${plate} มีในระบบแล้ว`);
-            } else {
-                customPlates[type].push(plate);
-                localStorage.setItem("categorizedCarPlates", JSON.stringify(customPlates));
-                alert(`เพิ่มทะเบียน ${plate} ให้กับ ${type === 'pickup' ? 'รถกระบะ' : 'รถตู้'} เรียบร้อยแล้ว`);
+            if (!customPlates[type]) {
+                customPlates[type] = [];
             }
 
+            const existingPlates = getPlatesByType(type);
+            if (existingPlates.includes(plate)) {
+                alert(`ทะเบียน ${plate} มีในระบบแล้ว`);
+                return;
+            }
+
+            customPlates[type].push(plate);
+            localStorage.setItem("categorizedCarPlates", JSON.stringify(customPlates));
+            
+            alert(`เพิ่มทะเบียน ${plate} เรียบร้อยแล้ว`);
             closeAddModal();
 
-            if (document.getElementById("machineType").value === type) {
-                onTypeChange();
-                document.getElementById("machineNo").value = plate;
-            }
+            // อัปเดตตัวเลือกในหน้าจอหลักทันที
+            document.getElementById("machineType").value = type;
+            onTypeChange();
+            document.getElementById("machineNo").value = plate;
         }
 
         function confirmMachineSelection() {
