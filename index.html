@@ -7,7 +7,7 @@
 
     <!-- Open Graph Metadata -->
     <meta property="og:title" content="ระบบบันทึกประวัติการซ่อมรถยนต์">
-    <meta property="og:description" content="ระบบบันทึกประวัติการซ่อมบำรุงรถกระบะและรถตู้ พร้อมเลือกรายการอะไหล่">
+    <meta property="og:description" content="ระบบบันทึกประวัติการซ่อมบำรุงรถยนต์ พร้อมเลือกรายการอะไหล่">
     <meta property="og:image" content="https://i.postimg.cc/zGDR1XdR/Designing-HC-Vehicle-Maintenance-2K-202608242125-removebg-preview.png">
     <meta property="og:type" content="website">
 
@@ -430,7 +430,7 @@
         <header class="app-header">
             <img src="https://i.postimg.cc/zGDR1XdR/Designing-HC-Vehicle-Maintenance-2K-202608242125-removebg-preview.png" alt="Vehicle Maintenance Logo" class="app-logo">
             <h1>🛠️ ระบบบันทึกประวัติการซ่อมรถยนต์</h1>
-            <p>บันทึกประวัติซ่อมบำรุงและเลือกรายการอะไหล่สำหรับ รถกระบะ และ รถตู้</p>
+            <p>บันทึกประวัติซ่อมบำรุงและเลือกรายการอะไหล่ตามประเภทรถยนต์</p>
         </header>
 
         <div class="grid-container">
@@ -446,11 +446,12 @@
                     <div class="step-title" style="margin-bottom: 10px;">1️⃣ เลือกประเภทรถและทะเบียน/รหัสรถ</div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="machineType">🚘 ประเภทรถยนต์</label>
+                            <div class="machine-no-header">
+                                <label for="machineType" style="margin-bottom:0;">🚘 ประเภทรถยนต์</label>
+                                <button type="button" class="btn-add-no" onclick="openAddCarTypeModal()">➕ เพิ่มประเภท</button>
+                            </div>
                             <select id="machineType" onchange="onTypeChange()">
                                 <option value="">-- เลือกประเภทรถยนต์ --</option>
-                                <option value="pickup">🛻 รถกระบะ</option>
-                                <option value="van">🚐 รถตู้</option>
                             </select>
                         </div>
 
@@ -519,16 +520,28 @@
         </div>
     </div>
 
+    <!-- Modal เพิ่มประเภทรถใหม่ -->
+    <div id="addCarTypeModal" class="modal-backdrop" style="display: none;">
+        <div class="modal-content">
+            <h3 style="margin-top: 0; margin-bottom: 15px;">➕ เพิ่มประเภทรถใหม่</h3>
+            <div class="form-group">
+                <label for="modalCarTypeName">🚘 ชื่อประเภทรถยนต์</label>
+                <input type="text" id="modalCarTypeName" placeholder="เช่น 🚛 รถบรรทุก 6 ล้อ">
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-sm" onclick="closeAddCarTypeModal()" style="background: #64748b; color: white;">ยกเลิก</button>
+                <button type="button" class="btn-sm" onclick="saveNewCarType()" style="background: var(--primary-color); color: white;">บันทึก</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal เพิ่มทะเบียนรถใหม่ -->
     <div id="addModal" class="modal-backdrop" style="display: none;">
         <div class="modal-content">
             <h3 style="margin-top: 0; margin-bottom: 15px;">➕ เพิ่มทะเบียนรถใหม่</h3>
             <div class="form-group">
                 <label for="modalType">🚘 เลือกประเภทรถ</label>
-                <select id="modalType">
-                    <option value="pickup">🛻 รถกระบะ</option>
-                    <option value="van">🚐 รถตู้</option>
-                </select>
+                <select id="modalType"></select>
             </div>
             <div class="form-group">
                 <label for="modalPlate">🔢 ทะเบียน / รหัสรถ</label>
@@ -547,10 +560,7 @@
             <h3 style="margin-top: 0; margin-bottom: 15px;">➕ เพิ่มรายการอะไหล่ใหม่</h3>
             <div class="form-group">
                 <label for="modalPartType">🚘 สำหรับประเภทรถ</label>
-                <select id="modalPartType" disabled>
-                    <option value="pickup">🛻 รถกระบะ</option>
-                    <option value="van">🚐 รถตู้</option>
-                </select>
+                <select id="modalPartType" disabled></select>
             </div>
             <div class="form-group">
                 <label for="modalPartName">🔧 ชื่อรายการอะไหล่</label>
@@ -568,6 +578,11 @@
     </div>
 
     <script>
+        const defaultCarTypes = [
+            { key: "pickup", name: "🛻 รถกระบะ" },
+            { key: "van", name: "🚐 รถตู้" }
+        ];
+
         const defaultPlates = {
             "pickup": ["ผก-1001", "ผก-1002", "ผก-1003"],
             "van": ["นข-2001", "นข-2002", "นข-2003"]
@@ -612,9 +627,91 @@
         };
 
         document.addEventListener("DOMContentLoaded", () => {
+            renderCarTypeOptions();
             updateFilterOptions();
             loadRepairHistory();
         });
+
+        function getAllCarTypes() {
+            let customTypes = [];
+            try {
+                const stored = localStorage.getItem("customCarTypes");
+                if (stored) customTypes = JSON.parse(stored);
+            } catch (e) { customTypes = []; }
+            return [...defaultCarTypes, ...customTypes];
+        }
+
+        function renderCarTypeOptions() {
+            const types = getAllCarTypes();
+            const selectMain = document.getElementById("machineType");
+            const selectModal = document.getElementById("modalType");
+            const selectPartModal = document.getElementById("modalPartType");
+
+            const currentMainVal = selectMain.value;
+
+            selectMain.innerHTML = `<option value="">-- เลือกประเภทรถยนต์ --</option>`;
+            selectModal.innerHTML = "";
+            selectPartModal.innerHTML = "";
+
+            types.forEach(t => {
+                const opt1 = document.createElement("option");
+                opt1.value = t.key;
+                opt1.textContent = t.name;
+                selectMain.appendChild(opt1);
+
+                const opt2 = document.createElement("option");
+                opt2.value = t.key;
+                opt2.textContent = t.name;
+                selectModal.appendChild(opt2);
+
+                const opt3 = document.createElement("option");
+                opt3.value = t.key;
+                opt3.textContent = t.name;
+                selectPartModal.appendChild(opt3);
+            });
+
+            if (currentMainVal) selectMain.value = currentMainVal;
+        }
+
+        function openAddCarTypeModal() {
+            document.getElementById("modalCarTypeName").value = "";
+            document.getElementById("addCarTypeModal").style.display = "flex";
+        }
+
+        function closeAddCarTypeModal() {
+            document.getElementById("addCarTypeModal").style.display = "none";
+        }
+
+        function saveNewCarType() {
+            const name = document.getElementById("modalCarTypeName").value.trim();
+            if (!name) {
+                alert("กรุณากรอกชื่อประเภทรถ");
+                return;
+            }
+
+            const allTypes = getAllCarTypes();
+            if (allTypes.some(t => t.name.toLowerCase() === name.toLowerCase())) {
+                alert(`ประเภทรถ "${name}" มีอยู่ในระบบแล้ว`);
+                return;
+            }
+
+            let customTypes = [];
+            try {
+                const stored = localStorage.getItem("customCarTypes");
+                if (stored) customTypes = JSON.parse(stored);
+            } catch (e) { customTypes = []; }
+
+            const key = `type_${Date.now()}`;
+            customTypes.push({ key: key, name: name });
+
+            localStorage.setItem("customCarTypes", JSON.stringify(customTypes));
+            alert(`เพิ่มประเภทรถ "${name}" เรียบร้อยแล้ว`);
+            closeAddCarTypeModal();
+
+            renderCarTypeOptions();
+            document.getElementById("machineType").value = key;
+            onTypeChange();
+        }
 
         function getPlatesByType(type) {
             let customPlates = {};
@@ -652,12 +749,16 @@
 
             const plates = getPlatesByType(type);
             selectNo.innerHTML = "";
-            plates.forEach(p => {
-                const opt = document.createElement("option");
-                opt.value = p;
-                opt.textContent = p;
-                selectNo.appendChild(opt);
-            });
+            if (plates.length === 0) {
+                selectNo.innerHTML = `<option value="">-- ไม่พบทะเบียน (กด + เพิ่มทะเบียน) --</option>`;
+            } else {
+                plates.forEach(p => {
+                    const opt = document.createElement("option");
+                    opt.value = p;
+                    opt.textContent = p;
+                    selectNo.appendChild(opt);
+                });
+            }
             selectNo.disabled = false;
         }
 
@@ -770,7 +871,7 @@
             }
 
             if (!machineNo) {
-                alert("กรุณาเลือกทะเบียนรถก่อนครับ");
+                alert("กรุณาเลือกหรือเพิ่มทะเบียนรถก่อนครับ");
                 return;
             }
 
@@ -791,13 +892,18 @@
             const container = document.getElementById("partsContainer");
             const partsList = getPartsByType(selectedTypeValue);
             
-            // เก็บสถานะรายการที่ถูกเลือกเดิมไว้ก่อนเรนเดอร์ใหม่
             const checkedIds = new Set();
             document.querySelectorAll('input[name="part"]:checked').forEach(cb => {
                 checkedIds.add(cb.getAttribute("data-id"));
             });
 
             container.innerHTML = "";
+
+            if (partsList.length === 0) {
+                container.innerHTML = `<div class="empty-msg">ยังไม่มีรายการอะไหล่ในประเภทรถนี้ (กด + เพิ่มรายการอะไหล่)</div>`;
+                calculateTotal();
+                return;
+            }
 
             partsList.forEach((part) => {
                 const isChecked = checkedIds.has(part.id) ? "checked" : "";
